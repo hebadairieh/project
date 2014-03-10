@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+
+<!-- Example based on http://bl.ocks.org/mbostock/3887118 -->
+<!-- Tooltip example from http://www.d3noob.org/2013/01/adding-tooltips-to-d3js-graph.html -->
+<head>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style2.css">
+  <link rel="stylesheet" href="css/bootstrap.css">
+  <script src="js/libs/d3.v3.min.js"></script>
+  <!-- // <script src="js/vis2.js"></script> -->
+</head>
+
+<body class="container-fluid body">
+  <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand">The US Government Projects Visualization</a>
+        </div>
+       <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Agencies</a></li>
+            <li class="active"><a href="vis2.html">Projects</a></li>
+            <li><a href="Cleaning.html">Cleaning</a></li>
+            <li><a href="contact.html">About</a></li>
+          </ul>
+        </div>
+      </div>
+  </div>
+  <div class="row"> 
+  <div id="divsvg" class="col-md-9">
+    <h3>Projects Scatter plot</h3>
+  </div>
+  <div id="dropdown" class="col-md-3">
+    <div class="well">
+      <h5>Filter by agency : </h5>
+
+    <select id="drop" class="form-control input-sm"></select>
+  </div>
+  <div class="well">
+    <svg width="500" height="120">
+      <circle cx="25" cy="25" r="15" fill="green"/> <text x="45" y="30">Under Budget</text>
+      <circle cx="25" cy="60" r="15" fill="#FFE228"/> <text x="45" y="65">Within Budget</text>
+
+      <circle cx="25" cy="95" r="15" fill="red"/> <text x="45" y="100">Over Budget</text>
+
+
+
+    </svg>
+  </div>
+  </div>
+</div>
+  <div class="row well">
+
+<h4>Visualization choice : </h4>
+This visualization allows the user to check the agencies projects, their starting date and the schedule variance through a scatter plot. 
+
+<h4>Interactivity : </h4>
+The interaction allows the user to filter the projects according to a specific agency through a dropdown list. Also the project name and start date appear on mouse hover.
+
+<h4>Audience : </h4>
+More specialized and experienced audience , that are interested in projects within specific agencies . They can recognize the relation between the schedule variance of the projects and the year in which the project has started and would finish.Also they can relate these patterns with the cost variance "color of circles". 
+
+<h4>Use case : </h4> 
+1) The user click on "Projects" from nav bar.<br>
+2) Noting the pattern of the locations of the projects which is located according to start date and schedule variance.<br>
+3) MouseOver the project "circle" will display all the important information about the project in a tooltip, which will make it easier for the user to recognise relationships and patterns between projects and agencies.<br>
+4) From the dropdown list under "Filter by Agency", the user can choose any agency.
+
+<h4><a href="http://bl.ocks.org/weiglemc/6185069" style="color:#287D1A">Click to check the reference.</a></h4>
+
+
+
+    </div>
+  <script type="text/javascript">
+  	var margin = {top: 20, right: 20, bottom: 30, left: 60},
+  	    width = 960 - margin.left - margin.right,
+  	    height = 520 - margin.top - margin.bottom;
+
+  	/*
+  	 * value accessor - returns the value to encode for a given data object.
+  	 * scale - maps value to a visual display encoding, such as a pixel position.
+  	 * map function - maps from data value to display value
+  	 * axis - sets up axis
+  	 */
+
+  	// setup x
+  	var format = d3.time.format("%d/%m/%Y");
+  	// console.log(format.parse("01/10/2011").getFullYear().toString());
+
+  	var xValue = function(d) {return d["Start_Date"];}, // data -> value
+  	    xScale = d3.scale.linear().range([0, width]), // value -> display
+  	    xMap = function(d) { return xScale(xValue(d));}, // data -> display
+  	    xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(d3.format("d"));
+
+  	// setup y
+  	var yValue = function(d) { return d["Schedule_Variance_days"];}, // data -> value
+  	    yScale = d3.scale.linear().range([height, 0]), // value -> display
+  	    yMap = function(d) { return yScale(yValue(d));}, // data -> display
+  	    yAxis = d3.svg.axis().scale(yScale).orient("left").tickFormat(d3.format("d"));
+
+  	// setup fill color
+  	// var cValue = function(d) { return d.Cost_Color;},
+  	   var color = function(d) { return d.Cost_Color;};
+//create body 
+      var bodyElement = d3.select("body");
+      //create dropdown initially
+      var drop = d3.select("#drop");
+
+
+
+  	// add the graph canvas to the body of the webpage
+  	var svg = d3.select("#divsvg").append("svg")
+  	    .attr("width", width + margin.left + margin.right)
+  	    .attr("height", height + margin.top + margin.bottom)
+  	  .append("g")
+  	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  	// add the tooltip area to the webpage
+  	var tooltip = d3.select("#divsvg").append("div")
+  	    .attr("class", "tooltip")
+  	    .style("opacity", 0);
+
+  	// load data
+  	d3.csv("data/Projects.csv", function(data) {
+
+  	  // change string (from CSV) into number format
+  	  var agencies = d3.nest()
+                .key(function(d) { return d["Agency_Code"]})
+                .entries(data);
+
+  	  data.forEach(function(d) {
+  	    d["Start_Date"]  = format.parse(d["Start_Date"]).getFullYear();
+  	    d["Schedule_Variance_days"] = +d["Schedule_Variance_days"];
+  	  });
+
+  	  // don't want dots overlapping axis, so add in buffer to data domain
+  	  xScale.domain([d3.min(data, xValue)-2, d3.max(data, xValue)+2]);
+  	  yScale.domain([d3.min(data, yValue)-80, d3.max(data, yValue)+80]);
+
+  	  // x-axis
+  	  svg.append("g")
+  	      .attr("class", "x axis")
+  	      .attr("transform", "translate(0," + height + ")")
+  	      .call(xAxis)
+  	    .append("text")
+  	      .attr("x", width)
+  	      .attr("y", -6)
+  	      .style("text-anchor", "end")
+  	      .text("Start Date");
+
+  	  // y-axis
+  	  svg.append("g")
+  	      .attr("class", "y axis")
+  	      .call(yAxis)
+  	    .append("text")
+  	      .attr("class", "label")
+  	      .attr("transform", "rotate(-90)")
+  	      .attr("y", 6)
+  	      .attr("dy", ".71em")
+  	      .style("text-anchor", "end")
+  	      .text("Schedule Variance (days)");
+
+      //build the dropdown menu
+      
+
+      drop.on("change", (function(){
+                    svg.selectAll(".dot").remove();
+
+                    svg.selectAll(".dot")
+                        .data(data)
+                      .enter().append("circle")
+                      .filter(function(row) {return row['Agency_Code'] == document.getElementById('drop').value;})
+                        .attr("class", "dot")
+                        .attr("r", 4)
+                        .attr("cx", xMap)
+                        .attr("cy", yMap)
+                        .attr("stroke-width", 1)
+                        .attr("stroke", "black")
+                        .style("fill", function(d) { return color(d);})
+                        .on("mouseover", function(d) {
+                            tooltip.transition()
+                                 .duration(200)
+                                 .style("opacity", .9);
+                            tooltip.html("<b> Project Name : </b> " + d["Project_Name"] + "<br/><b>  Start Year :</b>  " + d["Start_Date"]+ "<br/><b>  Completion Year :</b>  " + format.parse(d["Completion_Date"]).getFullYear()
+                            + "<br/> <b> Schedule Variance : </b>  " + yValue(d))
+                                 .style("left", (d3.event.pageX + 5) + "px")
+                                 .style("top", (d3.event.pageY - 28) + "px");
+                        })
+                        .on("mouseout", function(d) {
+                            tooltip.transition()
+                                 .duration(500)
+                                 .style("opacity", 0);});
+                }))
+                .selectAll("option")
+                .data(agencies)
+                .enter()
+                .append("option")
+                .attr("value", (function(d) {return d.key;}))
+                // Provide available text for the dropdown options
+                .text(function(d) {return d.values[0]["Agency_Name"];})
+
+      // draw dots
+      svg.selectAll(".dot")
+            .data(data)
+          .enter().append("circle")
+            .attr("class", "dot")
+            .attr("r", 3)
+            .attr("cx", xMap)
+            .attr("cy", yMap)
+            .attr("stroke-width", 1)
+            .attr("stroke", "black")
+            .style("fill", function(d) { return color(d);})
+            .on("mouseover", function(d) {
+                tooltip.transition()
+                     .duration(200)
+                     .style("opacity", .9);
+                tooltip.html("<b> Project Name : </b> " + d["Project_Name"] + "<br/><b>  Start Year :</b>  " + d["Start_Date"]+ "<br/><b>  Completion Year :</b>  " + format.parse(d["Completion_Date"]).getFullYear()
+                + "<br/> <b> Schedule Variance : </b>  " + yValue(d))
+                     .style("left", (d3.event.pageX + 5) + "px")
+                     .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                tooltip.transition()
+                     .duration(500)
+                     .style("opacity", 0);});
+
+      //draw legend
+      // var legendData = [["Under Budget", "red"], ["Within Budget", "green"], ["Over Budget", "yellow"]];
+  	  // var legend = svg.selectAll(".legend")
+  	  //     .data(legendData)
+  	  //   .enter().append("g")
+  	  //     .attr("class", "legend")
+  	  //     .attr("transform", function(d, id) { return "translate(0," + i * 20 + ")"; });
+
+  	  // // draw legend colored rectangles
+  	  // legend.append("rect")
+     //      .attr("x", width)
+  	  //     .attr("width", 18)
+  	  //     .attr("height", 18)
+     //      .attr("stroke-width", 3)
+     //      .attr("stroke", "black")
+  	  //     .style("fill", color);
+
+  	  // // draw legend text
+  	  // legend.append("text")
+  	  //     .attr("x", width - 24)
+  	  //     .attr("y", 9)
+  	  //     .attr("dy", ".35em")
+  	  //     .style("text-anchor", "end")
+  	  //     .text(function(d) { return d;})
+  	});
+
+  </script>
+
+
+</body>
+</html>

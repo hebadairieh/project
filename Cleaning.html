@@ -1,0 +1,138 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>Government IT Dashboard</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+  <!-- CSS concatenated and minified via ant build script-->
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/bootstrap.css">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- end CSS-->
+
+  <script src="js/libs/modernizr-2.0.6.min.js"></script>
+</head>
+
+<body class="container body">
+  <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar " ></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand">The US Government Projects Visualization</a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li ><a href="index.html">Agencies</a></li>
+            <li><a href="vis2.html">Projects</a></li>
+            <li class="active"><a href="Cleaning.html">Cleaning</a></li>
+            <li><a href="contact.html">About</a></li>
+          </ul>
+        </div>
+      </div>
+  </div>
+<h3>&nbsp;&nbsp; Data error and fixes</h3>
+
+  
+<div class="col-md-6">
+<table class="table table-striped table-bordered table-hover">
+<tr><th>Error</th><th>Fix</th></tr>
+<tr>
+  <td>1) Multiple representations</td>
+  <td>*Column options > edit cells > common transforms >trim white spaces.<br>
+*Then collapse consecutive white spaces.<br>
+* Use clustering feature(for investment title)
+</td>
+</tr>
+<tr>
+  <td>2) Shifted columns and rows</td>
+  <td>*Flag the projects within commerce agency (by applying a text facet in project name)<br/>
+* Edit the column and click transform and replace the column data with the new one for eg : edit the project ID column and replace it with :  cells.[“unique investment ID”].value
+</td>
+</tr>
+<tr>
+  <td>3) Summation Records</td>
+  <td>Select them all , then delete after you know what they refer to </td>
+</tr>
+<tr>
+  <td>4) Duplicate record detection</td>
+  <td>Edit cells >cluster and edit
+Detect duplicate and remove them
+</td>
+</tr>
+<tr>
+  <td>5) Redundant Data</td>
+  <td>Agency code + agency name:
+We have to check first that the agency code always match the name.
+To do this we have to join the data in one column , then apply a text facet.
+</td>
+</tr>
+
+<tr>
+<td>6) When applying a numeric facet to "lifecycle cost" ,it was discovered that some numeric values have text eg: 2.306 ($m)</td>
+<td>Select lifecycle cost column > Edit cells > Transform > value.split("(")[0].strip() </td>
+</tr>
+
+
+</table>
+
+
+
+<h3>Cleaning Steps : </h3>
+
+1.  Dealing with shifted rows in open refine by transforming the cells eg cells["Actual_column”].value <br>
+2.  Trim leading spaces on agency name 53 choice and on text columns. <br>
+3.  Text facet in agency name choices and cluster by nearest neighbor. <br>
+4.  Deal with multiple representations and redundancy.<br>
+5.  Delete the total rows.<br>
+6.  Delete blank rows.<br>
+7.  Added new column (combined agency code and name)two rows where edited to agency code 5 instead of 6 , apply text facet and detect redundancy (Combine agency name and code to  discover mistakes)<br>
+8. Text facet in investment title and cluster (ss1), merge <br>
+9. In some rows the agency project id and project name must be concatenated in the project id column <br>
+10. Check lifecycle cost <br>
+11. Manage dates (different format start and completion date) <br>
+12. Delete extra columns <br>
+
+<h3>Dealing with mutiple representations : </h3>
+Multiple representation was identified by clustering and checking the department with the same IDs.<br>
+DoA : department of agriculture.<br>
+DoE : Department of education + of energy .<br> 
+Education department : Department of education .<br>
+DoD : Department of Defence .<br>
+DoJ : Department of justice .<br>
+NRC : Nuclear Regulatory Commission .<br>
+SSA : Social security administration .<br>
+DoT : Department of transportation .<br>
+Department of transport , DoT : Department of transportation.<br>
+Health department : Department of health and human services .<br>
+The department: department of the interior +  department of the treasury depending on the code .<br>
+
+</div>
+        
+  <div class="col-md-6"> 
+<img class="img-responsive" src="img/1.png"/><br>
+<img class="img-responsive" src="img/3.png"/><br>
+<img class="img-responsive" src="img/4.png"/><br>
+<img class="img-responsive" src="img/5.png"/><br>
+<img class="img-responsive" src="img/6.png"/><br>
+<img class="img-responsive" src="img/7.png"/><br>
+
+
+
+
+  </div>
+
+</body>
+</html>
